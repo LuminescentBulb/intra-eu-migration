@@ -1,3 +1,4 @@
 /env
 /data/cleaned
 /data/raw/estat_migr_imm5prv.tsv
+/dashboard/public/data
