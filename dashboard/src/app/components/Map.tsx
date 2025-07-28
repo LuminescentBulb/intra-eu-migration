@@ -29,11 +29,11 @@ export default function MigrationMap({ data }: { data: any[] }) {
     new ArcLayer({
       id: 'migration-arcs',
       data,
-      getSourcePosition: d => d.fromCoords,
-      getTargetPosition: d => d.toCoords,
+      getSourcePosition: d => d.source,
+      getTargetPosition: d => d.target,
       getSourceColor: [0, 128, 255, 180],
       getTargetColor: [255, 0, 0, 180],
-      getWidth: d => Math.log1p(d.count) / 2 + Math.sin(pulse),
+      getWidth: d => Math.log1p(d.value) / 2 + Math.sin(pulse),
       updateTriggers: {
         getWidth: pulse
       }

@@ -1,34 +1,45 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { Play, Pause } from 'lucide-react';
 
-export default function Controls({ year, setYear }: { year: number, setYear: (y: number) => void }) {
-  const [playing, setPlaying] = useState(true);
+type ControlsPanelProps = {
+  year: number;
+  setYear: (year: number) => void;
+  minYear: number;
+  maxYear: number;
+};
 
-  useEffect(() => {
-    if (playing) {
-      const interval = setInterval(() => {
-        setYear(year < 2023 ? year + 1 : 2004);
-      }, 1500);
-      return () => clearInterval(interval);
-    }
-  }, [playing]);
+export default function ControlsPanel({ year, setYear, minYear, maxYear }: ControlsPanelProps) {
+  const [playing, setPlaying] = useState(false);
+
+  const togglePlay = () => {
+    setPlaying(prev => !prev);
+  };
 
   return (
-    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white dark:bg-black bg-opacity-70 p-4 rounded-xl shadow-lg">
-      <div className="flex items-center gap-4">
-        <button onClick={() => setPlaying(p => !p)} className="px-3 py-1 border rounded">
-          {playing ? "Pause" : "Play"}
+    <div className="flex flex-col gap-6 p-6 text-gray-100 w-full">
+      {/* Year + Play/Pause Row */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold tracking-wide">Year</h2>
+        <button
+          onClick={togglePlay}
+          className="p-2 bg-gray-800 hover:bg-gray-700 rounded transition"
+        >
+          {playing ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
         </button>
-        <input
-          type="range"
-          min="2004"
-          max="2023"
-          value={year}
-          onChange={e => setYear(+e.target.value)}
-        />
-        <span>{year}</span>
       </div>
+
+      {/* Slider */}
+      <input
+        type="range"
+        min={minYear}
+        max={maxYear}
+        value={year}
+        onChange={(e) => setYear(+e.target.value)}
+        className="w-full accent-blue-500"
+      />
+      <div className="text-right text-sm text-gray-400">{year}</div>
     </div>
   );
 }
