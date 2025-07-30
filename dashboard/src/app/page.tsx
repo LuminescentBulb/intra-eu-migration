@@ -45,7 +45,7 @@ export default function Home() {
 
       {/* Map container fills remaining space */}
       <div className="flex-1">
-        <MigrationMap data={visibleData} setSelectedCountry={setSelectedCountry} />
+        <MigrationMap data={visibleData} setSelectedCountry={setSelectedCountry} selectedCountry={selectedCountry} />
       </div>
     </main>
   );

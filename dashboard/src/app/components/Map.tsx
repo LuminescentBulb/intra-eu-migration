@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import DeckGL from '@deck.gl/react';
-import { ArcLayer, GeoJsonLayer } from '@deck.gl/layers';
-import { DeckProps } from '@deck.gl/core';
-import { MapboxOverlay } from '@deck.gl/mapbox';
+import { GeoJsonLayer, ArcLayer } from '@deck.gl/layers';
+import { MapboxOverlay, MapboxOverlayProps } from '@deck.gl/mapbox';
 import { Map, useControl } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -16,25 +15,34 @@ const INITIAL_VIEW_STATE = {
   bearing: 0,
 };
 
-export default function MigrationMap({
+export default function MigrationMap({ 
   data,
-  setSelectedCountry
+  setSelectedCountry,
+  selectedCountry 
 }: {
-  data: any[];
+  data: any;
   setSelectedCountry: (code: string) => void;
+  selectedCountry: string
 }) {
-  const [pulse, setPulse] = useState(0);
+  const [geoData, setGeoData] = useState(null);
 
-  function DeckGLOverlay(props: DeckProps) {
-    const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay(props));
+  useEffect(() => {
+    fetch('/data/europe.geojson')
+      .then(res => res.json())
+      .then(json => setGeoData(json))
+      .catch(console.error);
+  }, []);
+
+  function DeckGLOverlay(props: MapboxOverlayProps) {
+    const overlay = useControl(() => new MapboxOverlay(props));
     overlay.setProps(props);
     return null;
   }
 
-  const layers = [
+  const countryShapesLayer = geoData &&
     new GeoJsonLayer({
-      id: 'country-shapes',
-      data: './data/europe.geojson',
+      id: `country-shapes-${selectedCountry}`,
+      data: geoData,
       pickable: true,
       stroked: true,
       filled: true,
@@ -49,29 +57,25 @@ export default function MigrationMap({
       },
       getTooltip: ({ object }: { object: any }) =>
         object && `${object.properties.NAME} (${object.properties.ISO3})`,
-    }),
-    new ArcLayer({
-      id: 'migration-arcs',
-      data,
-      getSourcePosition: d => d.source,
-      getTargetPosition: d => d.target,
-      getSourceColor: [0, 128, 255, 180],
-      getTargetColor: [255, 0, 0, 180],
-      getWidth: d => Math.log1p(d.value) / 2 + Math.sin(pulse),
-      updateTriggers: {
-        getWidth: pulse
-      }
-    })
-  ];
+    });
+
+  const arcLayer = new ArcLayer({
+    id: 'migration-arcs',
+    data: Array.isArray(data) ? data : [],
+    pickable: false,
+    getSourcePosition: d => d.source,
+    getTargetPosition: d => d.target,
+    getSourceColor: [0, 128, 255, 180],
+    getTargetColor: [255, 0, 0, 180],
+    getWidth: d => Math.log1p(d.value) / 2,
+  });
+
+  const layers = [countryShapesLayer, arcLayer].filter(Boolean);
 
   return (
     <div style={{ width: '100%', height: '100vh' }}>
       <Map
-        initialViewState={{
-          longitude: 0.45,
-          latitude: 51.47,
-          zoom: 3
-        }}
+        initialViewState={INITIAL_VIEW_STATE}
         mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
         style={{ width: '100%', height: '100%' }}
       >
