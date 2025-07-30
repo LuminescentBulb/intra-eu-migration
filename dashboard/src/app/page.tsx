@@ -28,7 +28,6 @@ export default function Home() {
             minYear={2004}
             maxYear={2023}
           />
-
         </SidePanel>
       </div>
 
@@ -46,7 +45,7 @@ export default function Home() {
 
       {/* Map container fills remaining space */}
       <div className="flex-1">
-        <MigrationMap data={visibleData} />
+        <MigrationMap data={visibleData} setSelectedCountry={setSelectedCountry} />
       </div>
     </main>
   );

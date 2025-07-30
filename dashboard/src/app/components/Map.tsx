@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import DeckGL from '@deck.gl/react';
-import { ArcLayer } from '@deck.gl/layers';
+import { ArcLayer, GeoJsonLayer } from '@deck.gl/layers';
 import { DeckProps } from '@deck.gl/core';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import { Map, useControl } from 'react-map-gl/maplibre';
@@ -16,7 +16,13 @@ const INITIAL_VIEW_STATE = {
   bearing: 0,
 };
 
-export default function MigrationMap({ data }: { data: any[] }) {
+export default function MigrationMap({
+  data,
+  setSelectedCountry
+}: {
+  data: any[];
+  setSelectedCountry: (code: string) => void;
+}) {
   const [pulse, setPulse] = useState(0);
 
   function DeckGLOverlay(props: DeckProps) {
@@ -26,6 +32,24 @@ export default function MigrationMap({ data }: { data: any[] }) {
   }
 
   const layers = [
+    new GeoJsonLayer({
+      id: 'country-shapes',
+      data: './data/europe.geojson',
+      pickable: true,
+      stroked: true,
+      filled: true,
+      getLineColor: [255, 255, 255, 100],
+      getFillColor: [100, 100, 100, 20],
+      lineWidthMinPixels: 1,
+      autoHighlight: true,
+      onClick: ({ object }) => {
+        if (object?.properties?.ISO2) {
+          setSelectedCountry(object.properties.ISO2);
+        }
+      },
+      getTooltip: ({ object }: { object: any }) =>
+        object && `${object.properties.NAME} (${object.properties.ISO3})`,
+    }),
     new ArcLayer({
       id: 'migration-arcs',
       data,
