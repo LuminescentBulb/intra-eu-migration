@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Globe } from 'lucide-react';
+import { Play, Pause, RotateCcw, Globe, BarChart3, TrendingUp, Database, Users } from 'lucide-react';
 import { iso2ToCountry } from '@/utils/ISO2Country';
+import { MigrationArc } from './countryLoader';
 
 type ControlsPanelProps = {
   year: number;
@@ -11,6 +12,8 @@ type ControlsPanelProps = {
   maxYear: number;
   selectedCountry?: string;
   setSelectedCountry?: (country: string) => void;
+  migrationData?: MigrationArc[];
+  allMigrationData?: MigrationArc[];
 };
 
 const EU_COUNTRIES = [
@@ -18,16 +21,21 @@ const EU_COUNTRIES = [
   'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'UK', 'CH', 'NO', 'IS', 'LI'
 ];
 
+type TabType = 'top-migrants' | 'migration' | 'statistics' | 'eu-aggregates';
+
 export default function ControlsPanel({ 
   year, 
   setYear, 
   minYear, 
   maxYear, 
   selectedCountry, 
-  setSelectedCountry 
+  setSelectedCountry,
+  migrationData = [],
+  allMigrationData = []
 }: ControlsPanelProps) {
   const [playing, setPlaying] = useState(false);
   const [animationSpeed, setAnimationSpeed] = useState(1000); // ms per year
+  const [activeTab, setActiveTab] = useState<TabType>('top-migrants');
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -56,8 +64,80 @@ export default function ControlsPanel({
     setPlaying(false);
   };
 
-  return (
-    <div className="flex flex-col gap-6 p-6 text-gray-100 w-full h-full">
+  // Filter data for current year and selected country, and remove duplicates
+  const currentYearData = migrationData
+    .filter(d => d.year === year)
+    .reduce((acc, arc) => {
+      // Create a unique key for each country pair
+      const key = arc.direction === 'inflow' 
+        ? `${arc.sourceName}->${arc.targetName}`
+        : `${arc.targetName}->${arc.sourceName}`;
+      
+      // Only add if we haven't seen this combination before
+      if (!acc.some(existing => {
+        const existingKey = existing.direction === 'inflow'
+          ? `${existing.sourceName}->${existing.targetName}`
+          : `${existing.targetName}->${existing.sourceName}`;
+        return existingKey === key;
+      })) {
+        acc.push(arc);
+      }
+      return acc;
+    }, [] as MigrationArc[]);
+  
+  // Calculate top migrants for the year (remove duplicates)
+  const topInflows = currentYearData
+    .filter(d => d.direction === 'inflow')
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
+  
+  const topOutflows = currentYearData
+    .filter(d => d.direction === 'outflow')
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
+
+  // Calculate EU aggregates for the current year using ALL migration data
+  const euAggregates = allMigrationData
+    .filter(d => d.year === year)
+    .reduce((acc, arc) => {
+      // For inflows: target country receives migrants
+      if (arc.direction === 'inflow') {
+        const targetCountry = arc.targetName;
+        if (!acc.inflows[targetCountry]) {
+          acc.inflows[targetCountry] = 0;
+        }
+        acc.inflows[targetCountry] += arc.value;
+      }
+      
+      // For outflows: source country sends migrants
+      if (arc.direction === 'outflow') {
+        const sourceCountry = arc.sourceName;
+        if (!acc.outflows[sourceCountry]) {
+          acc.outflows[sourceCountry] = 0;
+        }
+        acc.outflows[sourceCountry] += arc.value;
+      }
+      
+      return acc;
+    }, { inflows: {} as Record<string, number>, outflows: {} as Record<string, number> });
+
+  const topEuInflows = Object.entries(euAggregates.inflows)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 10);
+
+  const topEuOutflows = Object.entries(euAggregates.outflows)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 10);
+
+  const tabs = [
+    { id: 'top-migrants' as TabType, label: 'Top Migrants', icon: TrendingUp },
+    { id: 'migration' as TabType, label: 'Migration Data', icon: Database },
+    { id: 'statistics' as TabType, label: 'Statistics', icon: BarChart3 },
+    { id: 'eu-aggregates' as TabType, label: 'EU Aggregates', icon: Users },
+  ];
+
+  const renderControlsSection = () => (
+    <div className="space-y-6">
       {/* Country Selection */}
       {setSelectedCountry && (
         <div className="space-y-2">
@@ -132,6 +212,291 @@ export default function ControlsPanel({
             <option value={3000}>Very Slow (3s)</option>
           </select>
         </div>
+      </div>
+    </div>
+  );
+
+  const renderTopMigrantsTab = () => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <TrendingUp className="w-4 h-4" />
+        <h3 className="text-sm font-semibold">Top Migrants for {year}</h3>
+      </div>
+      
+      <div className="space-y-4">
+        {/* Top Inflows */}
+        <div>
+          <h4 className="text-xs font-medium text-green-400 mb-2">Top Inflows</h4>
+          <div className="space-y-1">
+            {topInflows.map((arc, index) => (
+              <div key={`top-inflow-${arc.sourceName}-${index}`} className="flex justify-between items-center text-xs bg-gray-800 rounded px-2 py-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400 w-4">#{index + 1}</span>
+                  <span className="truncate">{arc.sourceName}</span>
+                </div>
+                <span className="text-green-400 font-medium">{arc.value.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Outflows */}
+        <div>
+          <h4 className="text-xs font-medium text-red-400 mb-2">Top Outflows</h4>
+          <div className="space-y-1">
+            {topOutflows.map((arc, index) => (
+              <div key={`top-outflow-${arc.targetName}-${index}`} className="flex justify-between items-center text-xs bg-gray-800 rounded px-2 py-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400 w-4">#{index + 1}</span>
+                  <span className="truncate">{arc.targetName}</span>
+                </div>
+                <span className="text-red-400 font-medium">{arc.value.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderMigrationDataTab = () => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Database className="w-4 h-4" />
+        <h3 className="text-sm font-semibold">Migration Data for {year}</h3>
+      </div>
+      
+      {currentYearData.length === 0 ? (
+        <div className="text-center py-8 text-gray-400">
+          <p>No migration data available for {selectedCountry} in {year}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {/* Inflows */}
+          <div>
+            <h4 className="text-xs font-medium text-green-400 mb-2">Inflows</h4>
+            <div className="space-y-1">
+              {currentYearData
+                .filter(d => d.direction === 'inflow')
+                .sort((a, b) => b.value - a.value)
+                .map((arc, index) => (
+                  <div key={`inflow-${arc.sourceName}-${index}`} className="flex justify-between items-center text-xs bg-gray-800 rounded px-2 py-1">
+                    <span className="truncate">{arc.sourceName}</span>
+                    <span className="text-green-400 font-medium">{arc.value.toLocaleString()}</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+
+          {/* Outflows */}
+          <div>
+            <h4 className="text-xs font-medium text-red-400 mb-2">Outflows</h4>
+            <div className="space-y-1">
+              {currentYearData
+                .filter(d => d.direction === 'outflow')
+                .sort((a, b) => b.value - a.value)
+                .map((arc, index) => (
+                  <div key={`outflow-${arc.targetName}-${index}`} className="flex justify-between items-center text-xs bg-gray-800 rounded px-2 py-1">
+                    <span className="truncate">{arc.targetName}</span>
+                    <span className="text-red-400 font-medium">{arc.value.toLocaleString()}</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+
+          {/* Summary */}
+          <div className="pt-2 border-t border-gray-700">
+            <div className="flex justify-between items-center text-xs">
+              <span>Net Migration:</span>
+              <span className={`font-medium ${
+                (currentYearData.filter(d => d.direction === 'inflow').reduce((sum, d) => sum + d.value, 0) -
+                currentYearData.filter(d => d.direction === 'outflow').reduce((sum, d) => sum + d.value, 0)
+              ) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {(currentYearData.filter(d => d.direction === 'inflow').reduce((sum, d) => sum + d.value, 0) -
+                 currentYearData.filter(d => d.direction === 'outflow').reduce((sum, d) => sum + d.value, 0)).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderStatisticsTab = () => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <BarChart3 className="w-4 h-4" />
+        <h3 className="text-sm font-semibold">Statistics for {year}</h3>
+      </div>
+      
+      <div className="space-y-3">
+        <div className="bg-gray-800 rounded p-3">
+          <h4 className="text-xs font-medium mb-2">Migration Summary</h4>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between">
+              <span>Total Inflows:</span>
+              <span className="text-green-400">
+                {currentYearData.filter(d => d.direction === 'inflow').reduce((sum, d) => sum + d.value, 0).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Total Outflows:</span>
+              <span className="text-red-400">
+                {currentYearData.filter(d => d.direction === 'outflow').reduce((sum, d) => sum + d.value, 0).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between border-t border-gray-700 pt-1">
+              <span>Net Migration:</span>
+              <span className={`font-medium ${
+                (currentYearData.filter(d => d.direction === 'inflow').reduce((sum, d) => sum + d.value, 0) -
+                currentYearData.filter(d => d.direction === 'outflow').reduce((sum, d) => sum + d.value, 0)
+              ) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {(currentYearData.filter(d => d.direction === 'inflow').reduce((sum, d) => sum + d.value, 0) -
+                 currentYearData.filter(d => d.direction === 'outflow').reduce((sum, d) => sum + d.value, 0)).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gray-800 rounded p-3">
+          <h4 className="text-xs font-medium mb-2">Data Coverage</h4>
+          <div className="space-y-1 text-xs">
+            <div className="flex justify-between">
+              <span>Total Flows:</span>
+              <span>{currentYearData.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Inflow Countries:</span>
+              <span>{new Set(currentYearData.filter(d => d.direction === 'inflow').map(d => d.sourceName)).size}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Outflow Countries:</span>
+              <span>{new Set(currentYearData.filter(d => d.direction === 'outflow').map(d => d.targetName)).size}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderEuAggregatesTab = () => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Users className="w-4 h-4" />
+        <h3 className="text-sm font-semibold">EU Migration Aggregates for {year} (All Countries)</h3>
+      </div>
+      
+      <div className="space-y-3">
+        <div className="bg-gray-800 rounded p-3">
+          <h4 className="text-xs font-medium mb-2">Top Countries by Total Inflows</h4>
+          <div className="space-y-1">
+            {topEuInflows.map(([country, value], index) => (
+              <div key={`eu-aggregate-${country}-${index}`} className="flex justify-between items-center text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400 w-4">#{index + 1}</span>
+                  <span className="truncate">{country}</span>
+                </div>
+                <span className="text-green-400 font-medium">{value.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-gray-800 rounded p-3">
+          <h4 className="text-xs font-medium mb-2">Top Countries by Total Outflows</h4>
+          <div className="space-y-1">
+            {topEuOutflows.map(([country, value], index) => (
+              <div key={`eu-aggregate-${country}-${index}`} className="flex justify-between items-center text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400 w-4">#{index + 1}</span>
+                  <span className="truncate">{country}</span>
+                </div>
+                <span className="text-red-400 font-medium">{value.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-gray-800 rounded p-3">
+          <h4 className="text-xs font-medium mb-2">Summary</h4>
+          <div className="space-y-1 text-xs">
+            <div className="flex justify-between">
+              <span>Total EU Migrants (Inflows):</span>
+              <span className="text-green-400">
+                {topEuInflows.reduce((sum, [, value]) => sum + value, 0).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Total EU Migrants (Outflows):</span>
+              <span className="text-red-400">
+                {topEuOutflows.reduce((sum, [, value]) => sum + value, 0).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>Countries with Data:</span>
+              <span>{topEuInflows.length + topEuOutflows.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Average per Country:</span>
+              <span>
+                {topEuInflows.length + topEuOutflows.length > 0 
+                  ? ((topEuInflows.reduce((sum, [, value]) => sum + value, 0) + topEuOutflows.reduce((sum, [, value]) => sum + value, 0)) / (topEuInflows.length + topEuOutflows.length)).toLocaleString(undefined, {maximumFractionDigits: 0})
+                  : '0'
+                }
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'top-migrants':
+        return renderTopMigrantsTab();
+      case 'migration':
+        return renderMigrationDataTab();
+      case 'statistics':
+        return renderStatisticsTab();
+      case 'eu-aggregates':
+        return renderEuAggregatesTab();
+      default:
+        return renderTopMigrantsTab();
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4 p-6 text-gray-100 w-full h-full">
+      {/* Controls Section - Always visible */}
+      {renderControlsSection()}
+
+      {/* Tab Selectors with horizontal scroll */}
+      <div className="border-b border-gray-700 overflow-x-auto">
+        <div className="flex min-w-max">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1 px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-gray-400 hover:text-gray-300'
+                }`}
+              >
+                <Icon className="w-3 h-3" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      <div className="flex-1 overflow-y-auto">
+        {renderTabContent()}
       </div>
     </div>
   );

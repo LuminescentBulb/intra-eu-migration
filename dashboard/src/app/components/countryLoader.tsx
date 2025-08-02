@@ -92,3 +92,57 @@ export async function loadMigrationByCountry(
 
     return arcs;
 }
+
+export async function loadAllMigrationData(): Promise<MigrationArc[]> {
+    const rows = await d3.csv('/data/net_migration_bilateral_total.csv');
+    const arcs: MigrationArc[] = [];
+
+    // Process ALL rows for EU aggregates
+    rows.forEach(row => {
+        const partner = row.partner;
+        const geo = row.geo;
+        const year = +row.year;
+        const netValue = +row.net_value;
+        
+        // Skip if it's the same country
+        if (partner === geo) return;
+
+        let sourceCountry: string;
+        let targetCountry: string;
+        let direction: 'inflow' | 'outflow';
+        let value: number;
+
+        if (netValue > 0) {
+            // Positive net_value means flow FROM partner TO geo
+            sourceCountry = partner;
+            targetCountry = geo;
+            direction = 'inflow';
+            value = netValue;
+        } else {
+            // Negative net_value means flow FROM geo TO partner
+            sourceCountry = geo;
+            targetCountry = partner;
+            direction = 'outflow';
+            value = Math.abs(netValue);
+        }
+
+        const sourceCoords = countryCentroids[sourceCountry];
+        const targetCoords = countryCentroids[targetCountry];
+
+        if (!sourceCoords || !targetCoords) return;
+
+        arcs.push({
+            id: `${sourceCountry}->${targetCountry} (${year})`,
+            source: sourceCoords,
+            target: targetCoords,
+            sourceName: iso2ToCountry(sourceCountry),
+            targetName: iso2ToCountry(targetCountry),
+            value: value,
+            year,
+            direction,
+            absValue: value,
+        });
+    });
+
+    return arcs;
+}

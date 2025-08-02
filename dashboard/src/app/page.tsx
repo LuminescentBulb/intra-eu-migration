@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import MigrationMap from './components/Map';
-import { loadMigrationByCountry, MigrationArc } from './components/countryLoader';
+import { loadMigrationByCountry, loadAllMigrationData, MigrationArc } from './components/countryLoader';
 import SidePanel from './components/SidePanel';
 import ControlsPanel from './components/Controls';
 
@@ -10,6 +10,7 @@ export default function Home() {
   const [selectedCountry, setSelectedCountry] = useState('RO');
   const [year, setYear] = useState(2016);
   const [data, setData] = useState<MigrationArc[]>([]);
+  const [allData, setAllData] = useState<MigrationArc[]>([]);
   const [panelOpen, setPanelOpen] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(300);
   const [isDragging, setIsDragging] = useState(false);
@@ -18,6 +19,10 @@ export default function Home() {
   useEffect(() => {
     loadMigrationByCountry(selectedCountry).then(setData);
   }, [selectedCountry]);
+
+  useEffect(() => {
+    loadAllMigrationData().then(setAllData);
+  }, []);
 
   const visibleData = data.filter(d => d.year === year);
 
@@ -51,7 +56,7 @@ export default function Home() {
   }, [isDragging]);
 
   return (
-    <main className={`flex min-h-screen relative ${isDragging ? 'dragging' : ''}`}>
+    <main className={`flex h-screen relative ${isDragging ? 'dragging' : ''}`}>
       {/* Sidebar */}
       <div 
         ref={sidebarRef}
@@ -72,6 +77,8 @@ export default function Home() {
             maxYear={2023}
             selectedCountry={selectedCountry}
             setSelectedCountry={setSelectedCountry}
+            migrationData={data}
+            allMigrationData={allData}
           />
         </SidePanel>
       </div>
