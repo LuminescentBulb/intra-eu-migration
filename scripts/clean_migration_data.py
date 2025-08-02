@@ -100,14 +100,34 @@ def save_cleaned_versions(df, out_dir):
     df_age = df_age[['partner', 'geo', 'year', 'age', 'value']]
     df_age.to_csv(os.path.join(out_dir, 'immigration_bilateral_by_age.csv'), index=False)
 
-    # Net migration
+    # Net migration - calculate actual net flows between countries
     df_net = df_total.copy()
-    df_rev = df_net.rename(columns={'partner': 'geo', 'geo': 'partner', 'value': 'rev_value'})
-    df_net = df_net.merge(df_rev, on=['partner', 'geo', 'year'], how='left')
-    df_net['rev_value'] = df_net['rev_value'].fillna(0)
-    df_net['net_value'] = df_net['value'] - df_net['rev_value']
-    df_net = df_net[['partner', 'geo', 'year', 'net_value']]
-    df_net.to_csv(os.path.join(out_dir, 'net_migration_bilateral_total.csv'), index=False)
+    
+    # Create reverse entries to calculate net flows
+    df_reverse = df_net.copy()
+    df_reverse['partner'], df_reverse['geo'] = df_reverse['geo'], df_reverse['partner']
+    df_reverse = df_reverse.rename(columns={'value': 'reverse_value'})
+    
+    # Merge to get both directions in same row
+    df_net_merged = df_net.merge(df_reverse, on=['partner', 'geo', 'year'], how='left')
+    df_net_merged['reverse_value'] = df_net_merged['reverse_value'].fillna(0)
+    
+    # Calculate net migration: positive means net outflow from partner to geo
+    df_net_merged['net_value'] = df_net_merged['value'] - df_net_merged['reverse_value']
+    
+    # Keep only the net flows
+    df_net_final = df_net_merged[['partner', 'geo', 'year', 'net_value']]
+    
+    # Create reciprocal entries with opposite signs
+    df_net_reciprocal = df_net_final.copy()
+    df_net_reciprocal['partner'], df_net_reciprocal['geo'] = df_net_reciprocal['geo'], df_net_reciprocal['partner']
+    df_net_reciprocal['net_value'] = -df_net_reciprocal['net_value']
+    
+    # Combine and remove duplicates
+    df_net_complete = pd.concat([df_net_final, df_net_reciprocal], ignore_index=True)
+    df_net_complete = df_net_complete.drop_duplicates(subset=['partner', 'geo', 'year'], keep='first')
+    
+    df_net_complete.to_csv(os.path.join(out_dir, 'net_migration_bilateral_total.csv'), index=False)
 
     print("Files saved:")
     print(" - immigration_bilateral_total.csv")
