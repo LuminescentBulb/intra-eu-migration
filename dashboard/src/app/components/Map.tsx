@@ -151,7 +151,7 @@ export default function MigrationMap({
           layers={layers}
           getTooltip={({ object }: PickingInfo<any>) => {
             if (object?.sourceName && object?.targetName) {
-              // Fix arrow direction: → for outflow (people leaving), ← for inflow (people coming)
+              // Arrow direction: → for outflow (people leaving), ← for inflow (people coming)
               let arrow = "";
               let source = object.sourceName;
               let target = object.targetName;

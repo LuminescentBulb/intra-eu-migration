@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import MigrationMap from './components/Map';
 import { loadMigrationByCountry, MigrationArc } from './components/countryLoader';
 import SidePanel from './components/SidePanel';
@@ -11,6 +11,9 @@ export default function Home() {
   const [year, setYear] = useState(2016);
   const [data, setData] = useState<MigrationArc[]>([]);
   const [panelOpen, setPanelOpen] = useState(true);
+  const [sidebarWidth, setSidebarWidth] = useState(300);
+  const [isDragging, setIsDragging] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadMigrationByCountry(selectedCountry).then(setData);
@@ -18,35 +21,94 @@ export default function Home() {
 
   const visibleData = data.filter(d => d.year === year);
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const newWidth = e.clientX;
+    if (newWidth >= 200 && newWidth <= 600) {
+      setSidebarWidth(newWidth);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging]);
+
   return (
-    <main className="flex min-h-screen">
-      <div className={`transition-all duration-300 ${panelOpen ? 'w-[300px]' : 'w-0'} overflow-hidden bg-gray-900 text-gray-100`}>
+    <main className={`flex min-h-screen relative ${isDragging ? 'dragging' : ''}`}>
+      {/* Sidebar */}
+      <div 
+        ref={sidebarRef}
+        className={`bg-gray-900 text-gray-100 transition-all duration-300 ease-out overflow-hidden ${
+          panelOpen ? 'w-0' : 'w-0'
+        }`}
+        style={{ 
+          width: panelOpen ? `${sidebarWidth}px` : '0px',
+          minWidth: panelOpen ? '200px' : '0px',
+          maxWidth: panelOpen ? '600px' : '0px'
+        }}
+      >
         <SidePanel>
           <ControlsPanel
             year={year}
             setYear={setYear}
             minYear={2004}
             maxYear={2023}
+            selectedCountry={selectedCountry}
+            setSelectedCountry={setSelectedCountry}
           />
         </SidePanel>
       </div>
 
-      {/* Chevron toggle */}
+      {/* Resize handle */}
+      {panelOpen && (
+        <div
+          className="w-1 bg-gray-700 hover:bg-gray-600 resize-handle transition-colors duration-200 relative z-20 no-select"
+          onMouseDown={handleMouseDown}
+        >
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-0.5 h-8 bg-gray-500 rounded-full"></div>
+          </div>
+        </div>
+      )}
+
+      {/* Toggle button */}
       <button
         onClick={() => setPanelOpen(!panelOpen)}
-        className="absolute top-1/2 left-[300px] z-10 bg-gray-800 hover:bg-gray-700 text-white rounded-r px-2 py-1 transition-all"
+        className="absolute top-1/2 z-30 bg-gray-800 hover:bg-gray-700 text-white rounded-r px-2 py-1 transition-all duration-200 ease-out no-select"
         style={{
           transform: 'translateY(-50%)',
-          left: panelOpen ? '300px' : '0px',
+          left: panelOpen ? `${sidebarWidth}px` : '0px',
         }}
       >
         {panelOpen ? '›' : '‹'}
       </button>
 
-      {/* Map container fills remaining space */}
-      <div className="flex-1">
+      {/* Map container */}
+      <div className="flex-1 transition-all duration-300 ease-out">
         <MigrationMap data={visibleData} setSelectedCountry={setSelectedCountry} selectedCountry={selectedCountry} />
       </div>
+
+      {/* Overlay for dragging */}
+      {isDragging && (
+        <div className="fixed inset-0 z-50 cursor-col-resize no-select" />
+      )}
     </main>
   );
 }
