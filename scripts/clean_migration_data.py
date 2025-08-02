@@ -32,6 +32,16 @@ def clean_imm5prv(file_path):
     # Fix id_vars
     dimension_cols = ['geo' if '\\' in col else col for col in dimension_cols]
 
+    # Replace "EL" with "GR" for compatibility (EL is the old ISO code for Greece)
+    geo_col = [col for col in new_df.columns if '\\' in col][0] if any('\\' in col for col in new_df.columns) else 'geo'
+    partner_col = [col for col in new_df.columns if col in ['partner', 'citizen', 'dest']][0] if any(col in new_df.columns for col in ['partner', 'citizen', 'dest']) else 'partner'
+    
+    # Replace EL with GR in both geo and partner columns
+    if geo_col in new_df.columns:
+        new_df[geo_col] = new_df[geo_col].replace('EL', 'GR')
+    if partner_col in new_df.columns:
+        new_df[partner_col] = new_df[partner_col].replace('EL', 'GR')
+
     # Melt to long format
     df_long = new_df.melt(
         id_vars=dimension_cols, var_name='year', value_name='value'
