@@ -34,6 +34,9 @@ export async function loadMigrationByCountry(
         
         // Skip if it's the same country
         if (partner === geo) return;
+        
+        // Skip if there's no net migration (value is 0)
+        if (netValue === 0) return;
 
         let sourceCountry: string;
         let targetCountry: string;
@@ -106,6 +109,9 @@ export async function loadAllMigrationData(): Promise<MigrationArc[]> {
         
         // Skip if it's the same country
         if (partner === geo) return;
+        
+        // Skip if there's no net migration (value is 0)
+        if (netValue === 0) return;
 
         let sourceCountry: string;
         let targetCountry: string;

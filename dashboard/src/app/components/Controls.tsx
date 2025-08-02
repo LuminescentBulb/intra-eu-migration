@@ -89,14 +89,14 @@ export default function ControlsPanel({
       return acc;
     }, [] as MigrationArc[]);
   
-  // Calculate top migrants for the year (remove duplicates)
+  // Calculate top migrants for the year (remove duplicates and zero values)
   const topInflows = currentYearData
-    .filter(d => d.direction === 'inflow')
+    .filter(d => d.direction === 'inflow' && d.value > 0)
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
   
   const topOutflows = currentYearData
-    .filter(d => d.direction === 'outflow')
+    .filter(d => d.direction === 'outflow' && d.value > 0)
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
 
@@ -254,15 +254,19 @@ export default function ControlsPanel({
         <div>
           <h4 className="text-xs font-medium text-green-400 mb-2">Top Inflows</h4>
           <div className="space-y-1">
-            {topInflows.map((arc, index) => (
-              <div key={`top-inflow-${arc.sourceName}-${index}`} className="flex justify-between items-center text-xs bg-gray-800 rounded px-2 py-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-400 w-4">#{index + 1}</span>
-                  <span className="truncate">{arc.sourceName}</span>
+            {topInflows.length > 0 ? (
+              topInflows.map((arc, index) => (
+                <div key={`top-inflow-${arc.sourceName}-${index}`} className="flex justify-between items-center text-xs bg-gray-800 rounded px-2 py-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400 w-4">#{index + 1}</span>
+                    <span className="truncate">{arc.sourceName}</span>
+                  </div>
+                  <span className="text-green-400 font-medium">{arc.value.toLocaleString()}</span>
                 </div>
-                <span className="text-green-400 font-medium">{arc.value.toLocaleString()}</span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-xs text-gray-400 px-2 py-1">No inflow data available</div>
+            )}
           </div>
         </div>
 
@@ -270,15 +274,19 @@ export default function ControlsPanel({
         <div>
           <h4 className="text-xs font-medium text-red-400 mb-2">Top Outflows</h4>
           <div className="space-y-1">
-            {topOutflows.map((arc, index) => (
-              <div key={`top-outflow-${arc.targetName}-${index}`} className="flex justify-between items-center text-xs bg-gray-800 rounded px-2 py-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-400 w-4">#{index + 1}</span>
-                  <span className="truncate">{arc.targetName}</span>
+            {topOutflows.length > 0 ? (
+              topOutflows.map((arc, index) => (
+                <div key={`top-outflow-${arc.targetName}-${index}`} className="flex justify-between items-center text-xs bg-gray-800 rounded px-2 py-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400 w-4">#{index + 1}</span>
+                    <span className="truncate">{arc.targetName}</span>
+                  </div>
+                  <span className="text-red-400 font-medium">{arc.value.toLocaleString()}</span>
                 </div>
-                <span className="text-red-400 font-medium">{arc.value.toLocaleString()}</span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-xs text-gray-400 px-2 py-1">No outflow data available</div>
+            )}
           </div>
         </div>
       </div>
@@ -303,7 +311,7 @@ export default function ControlsPanel({
             <h4 className="text-xs font-medium text-green-400 mb-2">Inflows</h4>
             <div className="space-y-1">
               {currentYearData
-                .filter(d => d.direction === 'inflow')
+                .filter(d => d.direction === 'inflow' && d.value > 0)
                 .sort((a, b) => b.value - a.value)
                 .map((arc, index) => (
                   <div key={`inflow-${arc.sourceName}-${index}`} className="flex justify-between items-center text-xs bg-gray-800 rounded px-2 py-1">
@@ -319,7 +327,7 @@ export default function ControlsPanel({
             <h4 className="text-xs font-medium text-red-400 mb-2">Outflows</h4>
             <div className="space-y-1">
               {currentYearData
-                .filter(d => d.direction === 'outflow')
+                .filter(d => d.direction === 'outflow' && d.value > 0)
                 .sort((a, b) => b.value - a.value)
                 .map((arc, index) => (
                   <div key={`outflow-${arc.targetName}-${index}`} className="flex justify-between items-center text-xs bg-gray-800 rounded px-2 py-1">
