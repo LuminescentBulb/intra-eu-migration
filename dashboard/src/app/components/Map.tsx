@@ -20,10 +20,12 @@ export default function MigrationMap({
   data,
   setSelectedCountry,
   selectedCountry,
+  mapStyle,
 }: {
   data: any[];
   setSelectedCountry: (code: string) => void;
   selectedCountry: string;
+  mapStyle?: string;
 }) {
   const [geoData, setGeoData] = useState<any | null>(null);
   const [hoverInfo, setHoverInfo] = useState<any | null>(null);
@@ -144,7 +146,7 @@ export default function MigrationMap({
 
       <Map
         initialViewState={INITIAL_VIEW_STATE}
-        mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+        mapStyle={mapStyle || "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"}
         style={{ width: '100%', height: '100%' }}
       >
         <DeckGLOverlay

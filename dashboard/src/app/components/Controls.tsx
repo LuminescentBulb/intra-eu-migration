@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Globe, BarChart3, TrendingUp, Database, Users } from 'lucide-react';
+import { Play, Pause, RotateCcw, Globe, BarChart3, TrendingUp, Database, Users, Map } from 'lucide-react';
 import { iso2ToCountry } from '@/utils/ISO2Country';
 import { MigrationArc } from './countryLoader';
 
@@ -14,6 +14,8 @@ type ControlsPanelProps = {
   setSelectedCountry?: (country: string) => void;
   migrationData?: MigrationArc[];
   allMigrationData?: MigrationArc[];
+  mapStyle?: string;
+  setMapStyle?: (style: string) => void;
 };
 
 const EU_COUNTRIES = [
@@ -31,7 +33,9 @@ export default function ControlsPanel({
   selectedCountry, 
   setSelectedCountry,
   migrationData = [],
-  allMigrationData = []
+  allMigrationData = [],
+  mapStyle,
+  setMapStyle
 }: ControlsPanelProps) {
   const [playing, setPlaying] = useState(false);
   const [animationSpeed, setAnimationSpeed] = useState(1000); // ms per year
@@ -138,26 +142,48 @@ export default function ControlsPanel({
 
   const renderControlsSection = () => (
     <div className="space-y-6">
-      {/* Country Selection */}
-      {setSelectedCountry && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4" />
-            <h3 className="text-sm font-semibold">Selected Country</h3>
+      {/* Map Style and Country Selection */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Map Style Selection */}
+        {setMapStyle && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Map className="w-4 h-4" />
+              <h3 className="text-sm font-semibold">Map Style</h3>
+            </div>
+            <select
+              value={mapStyle || 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'}
+              onChange={(e) => setMapStyle(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-400"
+            >
+              <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">Dark Matter</option>
+              <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Positron</option>
+              <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">Voyager</option>
+            </select>
           </div>
-          <select
-            value={selectedCountry || 'RO'}
-            onChange={(e) => setSelectedCountry(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-400"
-          >
-            {EU_COUNTRIES.map(country => (
-              <option key={country} value={country}>
-                {iso2ToCountry(country)}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+        )}
+
+        {/* Country Selection */}
+        {setSelectedCountry && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4" />
+              <h3 className="text-sm font-semibold">Selected Country</h3>
+            </div>
+            <select
+              value={selectedCountry || 'RO'}
+              onChange={(e) => setSelectedCountry(e.target.value)}
+              className="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-400"
+            >
+              {EU_COUNTRIES.map(country => (
+                <option key={country} value={country}>
+                  {iso2ToCountry(country)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
 
       {/* Year + Play/Pause Row */}
       <div className="space-y-3">

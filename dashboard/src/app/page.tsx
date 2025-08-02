@@ -14,6 +14,7 @@ export default function Home() {
   const [panelOpen, setPanelOpen] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(300);
   const [isDragging, setIsDragging] = useState(false);
+  const [mapStyle, setMapStyle] = useState('https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json');
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -79,6 +80,8 @@ export default function Home() {
             setSelectedCountry={setSelectedCountry}
             migrationData={data}
             allMigrationData={allData}
+            mapStyle={mapStyle}
+            setMapStyle={setMapStyle}
           />
         </SidePanel>
       </div>
@@ -109,7 +112,7 @@ export default function Home() {
 
       {/* Map container */}
       <div className="flex-1 transition-all duration-300 ease-out">
-        <MigrationMap data={visibleData} setSelectedCountry={setSelectedCountry} selectedCountry={selectedCountry} />
+        <MigrationMap data={visibleData} setSelectedCountry={setSelectedCountry} selectedCountry={selectedCountry} mapStyle={mapStyle} />
       </div>
 
       {/* Overlay for dragging */}
