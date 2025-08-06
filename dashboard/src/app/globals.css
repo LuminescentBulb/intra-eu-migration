@@ -64,3 +64,42 @@ body {
   -ms-user-select: none;
   user-select: none;
 }
+
+/* Embedded mode styles */
+.embedded {
+  /* Remove any margins/padding that might cause scrollbars in iframe */
+  margin: 0;
+  padding: 0;
+}
+
+.embedded .bg-gray-900 {
+  /* Make sidebar more compact in embedded mode */
+  font-size: 0.875rem;
+}
+
+/* Compact mode styles */
+.compact .bg-gray-900 {
+  font-size: 0.75rem;
+}
+
+.compact button {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.compact input, .compact select {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Ensure iframe compatibility */
+@media (max-width: 768px) {
+  .embedded {
+    /* Mobile-friendly adjustments for embedded mode */
+    font-size: 0.875rem;
+  }
+  
+  .compact {
+    font-size: 0.75rem;
+  }
+}

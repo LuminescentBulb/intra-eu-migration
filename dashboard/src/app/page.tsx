@@ -15,7 +15,38 @@ export default function Home() {
   const [sidebarWidth, setSidebarWidth] = useState(300);
   const [isDragging, setIsDragging] = useState(false);
   const [mapStyle, setMapStyle] = useState('https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json');
+  const [isEmbedded, setIsEmbedded] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Check if dashboard is embedded and handle URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const embedded = urlParams.get('embedded') === 'true';
+    const compact = urlParams.get('compact') === 'true';
+    const countryParam = urlParams.get('country');
+    const yearParam = urlParams.get('year');
+    
+    setIsEmbedded(embedded);
+    setIsCompact(compact);
+    
+    // Set initial values from URL parameters
+    if (countryParam) {
+      setSelectedCountry(countryParam);
+    }
+    if (yearParam) {
+      const yearNum = parseInt(yearParam);
+      if (yearNum >= 2004 && yearNum <= 2023) {
+        setYear(yearNum);
+      }
+    }
+    
+    // Adjust default settings for embedded mode
+    if (embedded) {
+      setPanelOpen(false);
+      setSidebarWidth(compact ? 200 : 250);
+    }
+  }, []);
 
   useEffect(() => {
     loadMigrationByCountry(selectedCountry).then(setData);
@@ -36,7 +67,9 @@ export default function Home() {
     if (!isDragging) return;
     
     const newWidth = e.clientX;
-    if (newWidth >= 200 && newWidth <= 600) {
+    const minWidth = isCompact ? 150 : 200;
+    const maxWidth = isCompact ? 400 : 600;
+    if (newWidth >= minWidth && newWidth <= maxWidth) {
       setSidebarWidth(newWidth);
     }
   };
@@ -54,10 +87,10 @@ export default function Home() {
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging]);
+  }, [isDragging, isCompact]);
 
   return (
-    <main className={`flex h-screen relative ${isDragging ? 'dragging' : ''}`}>
+    <main className={`flex h-screen relative ${isDragging ? 'dragging' : ''} ${isEmbedded ? 'embedded' : ''} ${isCompact ? 'compact' : ''}`}>
       {/* Sidebar */}
       <div 
         ref={sidebarRef}
@@ -66,8 +99,8 @@ export default function Home() {
         }`}
         style={{ 
           width: panelOpen ? `${sidebarWidth}px` : '0px',
-          minWidth: panelOpen ? '200px' : '0px',
-          maxWidth: panelOpen ? '600px' : '0px'
+          minWidth: panelOpen ? (isCompact ? '150px' : '200px') : '0px',
+          maxWidth: panelOpen ? (isCompact ? '400px' : '600px') : '0px'
         }}
       >
         <SidePanel>
