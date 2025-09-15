@@ -145,7 +145,13 @@ export default function Home() {
 
       {/* Map container */}
       <div className="flex-1 transition-all duration-300 ease-out">
-        <MigrationMap data={visibleData} setSelectedCountry={setSelectedCountry} selectedCountry={selectedCountry} mapStyle={mapStyle} />
+        <MigrationMap
+          data={visibleData}
+          setSelectedCountry={setSelectedCountry}
+          selectedCountry={selectedCountry}
+          mapStyle={mapStyle}
+          setMapStyle={setMapStyle}
+        />
       </div>
 
       {/* Overlay for dragging */}

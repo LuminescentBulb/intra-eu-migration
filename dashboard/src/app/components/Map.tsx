@@ -20,12 +20,14 @@ export default function MigrationMap({
   data,
   setSelectedCountry,
   selectedCountry,
-  mapStyle,
+  mapStyle = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+  setMapStyle,
 }: {
   data: any[];
   setSelectedCountry: (code: string) => void;
   selectedCountry: string;
   mapStyle?: string;
+  setMapStyle?: (style: string) => void;
 }) {
   const [geoData, setGeoData] = useState<any | null>(null);
   const [hoverInfo, setHoverInfo] = useState<any | null>(null);
@@ -121,8 +123,61 @@ export default function MigrationMap({
 
   const layers = [countryShapesLayer, arcLayer].filter(Boolean);
 
+  // Map style options
+  // SVG icons for each style
+  const styleOptions = [
+    {
+      value: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+      label: 'Dark Matter',
+      icon: (
+        <svg width="28" height="28" viewBox="0 0 28 28" className="rounded" style={{ display: 'block' }}>
+          <rect x="4" y="4" width="20" height="20" rx="4" fill="#3b4252" />
+        </svg>
+      ),
+    },
+    {
+      value: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+      label: 'Positron',
+      icon: (
+        <svg width="28" height="28" viewBox="0 0 28 28" className="rounded" style={{ display: 'block' }}>
+          <rect x="4" y="4" width="20" height="20" rx="4" fill="#e2e8f0" />
+        </svg>
+      ),
+    },
+    {
+      value: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+      label: 'Voyager',
+      icon: (
+        <svg width="28" height="28" viewBox="0 0 28 28" className="rounded" style={{ display: 'block' }}>
+          <rect x="4" y="4" width="20" height="20" rx="4" fill="#b6c6e3" />
+        </svg>
+      ),
+    },
+  ];
+
   return (
     <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
+      {/* Map Style Overlay */}
+      {setMapStyle && (
+        <div className="absolute top-4 left-4 z-20 flex flex-row gap-2 bg-gray-900 bg-opacity-90 text-white rounded-full shadow-lg p-1 border border-gray-800" style={{ backdropFilter: 'blur(4px)' }}>
+          {styleOptions.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setMapStyle(opt.value)}
+              className={`flex items-center justify-center rounded-full border-2 transition-all focus:outline-none h-10 w-10 bg-gray-900 ${
+                mapStyle === opt.value
+                  ? 'border-blue-400 shadow-md'
+                  : 'border-transparent hover:border-blue-300'
+              }`}
+              aria-pressed={mapStyle === opt.value}
+              title={opt.label}
+            >
+              {opt.icon}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Legend */}
       <div className="absolute top-4 right-4 bg-gray-900 bg-opacity-80 rounded-lg p-3 text-white text-xs z-10">
         <div className="space-y-2">
@@ -146,7 +201,7 @@ export default function MigrationMap({
 
       <Map
         initialViewState={INITIAL_VIEW_STATE}
-        mapStyle={mapStyle || "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"}
+        mapStyle={mapStyle}
         style={{ width: '100%', height: '100%' }}
       >
         <DeckGLOverlay

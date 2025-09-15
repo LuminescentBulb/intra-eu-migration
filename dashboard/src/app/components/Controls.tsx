@@ -76,7 +76,6 @@ export default function ControlsPanel({
       const key = arc.direction === 'inflow' 
         ? `${arc.sourceName}->${arc.targetName}`
         : `${arc.targetName}->${arc.sourceName}`;
-      
       // Only add if we haven't seen this combination before
       if (!acc.some(existing => {
         const existingKey = existing.direction === 'inflow'
@@ -142,27 +141,8 @@ export default function ControlsPanel({
 
   const renderControlsSection = () => (
     <div className="space-y-6">
-      {/* Map Style and Country Selection */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Map Style Selection */}
-        {setMapStyle && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Map className="w-4 h-4" />
-              <h3 className="text-sm font-semibold">Map Style</h3>
-            </div>
-            <select
-              value={mapStyle || 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'}
-              onChange={(e) => setMapStyle(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-400"
-            >
-              <option value="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json">Dark Matter</option>
-              <option value="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json">Positron</option>
-              <option value="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json">Voyager</option>
-            </select>
-          </div>
-        )}
-
+      {/* Country Selection Only (map style selector removed) */}
+      <div className="grid grid-cols-1 gap-4">
         {/* Country Selection */}
         {setSelectedCountry && (
           <div className="space-y-2">
@@ -170,17 +150,23 @@ export default function ControlsPanel({
               <Globe className="w-4 h-4" />
               <h3 className="text-sm font-semibold">Selected Country</h3>
             </div>
-            <select
-              value={selectedCountry || 'RO'}
-              onChange={(e) => setSelectedCountry(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-400"
-            >
-              {EU_COUNTRIES.map(country => (
-                <option key={country} value={country}>
-                  {iso2ToCountry(country)}
-                </option>
-              ))}
-            </select>
+            <div className="relative w-full">
+              <select
+                value={selectedCountry || 'RO'}
+                onChange={(e) => setSelectedCountry(e.target.value)}
+                className="w-full appearance-none bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-400 pr-8 custom-select"
+                style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
+              >
+                {EU_COUNTRIES.map(country => (
+                  <option key={country} value={country}>
+                    {iso2ToCountry(country)}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                ▼
+              </span>
+            </div>
           </div>
         )}
       </div>
@@ -209,14 +195,21 @@ export default function ControlsPanel({
 
         {/* Year Slider */}
         <div className="space-y-2">
-          <input
-            type="range"
-            min={minYear}
-            max={maxYear}
-            value={year}
-            onChange={(e) => setYear(+e.target.value)}
-            className="w-full accent-blue-500"
-          />
+          <div className="w-full flex items-center">
+            <input
+              type="range"
+              min={minYear}
+              max={maxYear}
+              value={year}
+              onChange={(e) => setYear(+e.target.value)}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer custom-slider accent-blue-500"
+              style={{
+                WebkitAppearance: 'none',
+                appearance: 'none',
+                background: 'linear-gradient(to right, #60a5fa 0%, #60a5fa ' + ((year-minYear)/(maxYear-minYear))*100 + '%, #374151 ' + ((year-minYear)/(maxYear-minYear))*100 + '%, #374151 100%)',
+              }}
+            />
+          </div>
           <div className="flex justify-between text-xs text-gray-400">
             <span>{minYear}</span>
             <span className="font-semibold">{year}</span>
@@ -227,16 +220,22 @@ export default function ControlsPanel({
         {/* Animation Speed */}
         <div className="space-y-2">
           <label className="text-xs text-gray-400">Animation Speed</label>
-          <select
-            value={animationSpeed}
-            onChange={(e) => setAnimationSpeed(+e.target.value)}
-            className="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-400"
-          >
-            <option value={500}>Fast (0.5s)</option>
-            <option value={1000}>Normal (1s)</option>
-            <option value={2000}>Slow (2s)</option>
-            <option value={3000}>Very Slow (3s)</option>
-          </select>
+          <div className="relative w-full">
+            <select
+              value={animationSpeed}
+              onChange={(e) => setAnimationSpeed(+e.target.value)}
+              className="w-full appearance-none bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-400 pr-8 custom-select"
+              style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
+            >
+              <option value={500}>Fast (0.5s)</option>
+              <option value={1000}>Normal (1s)</option>
+              <option value={2000}>Slow (2s)</option>
+              <option value={3000}>Very Slow (3s)</option>
+            </select>
+            <span className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs">
+              ▼
+            </span>
+          </div>
         </div>
       </div>
     </div>
