@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer, ArcLayer } from '@deck.gl/layers';
 import { MapboxOverlay, MapboxOverlayProps } from '@deck.gl/mapbox';
@@ -39,11 +39,18 @@ export default function MigrationMap({
       .catch(console.error);
   }, []);
 
-  function DeckGLOverlay(props: MapboxOverlayProps) {
-    const overlay = useControl(() => new MapboxOverlay({ interleaved: false }));
-    overlay.setProps(props);
+  // Memoize DeckGLOverlay instance to avoid recreation
+  const DeckGLOverlay = useCallback((props: MapboxOverlayProps) => {
+    const overlayRef = useRef<MapboxOverlay | null>(null);
+    useControl(() => {
+      if (!overlayRef.current) {
+        overlayRef.current = new MapboxOverlay({ interleaved: false });
+      }
+      return overlayRef.current;
+    });
+    overlayRef.current?.setProps(props);
     return null;
-  }
+  }, []);
 
   // Process data to highlight top flows and selected country flows
   const annotatedData = useMemo(() => {
@@ -59,8 +66,8 @@ export default function MigrationMap({
     }));
   }, [data, selectedCountry]);
 
-  // Arc layer with enhanced color coding for direction
-  const arcLayer = new ArcLayer({
+  // Memoize layers to avoid unnecessary recreation
+  const arcLayer = useMemo(() => new ArcLayer({
     id: 'migration-arcs',
     data: annotatedData,
     pickable: true,
@@ -68,60 +75,70 @@ export default function MigrationMap({
     getTargetPosition: d => d.target,
     getSourceColor: d => {
       if (d.direction === 'outflow') {
-        // Outflows: Red to Orange gradient
         return d.isTop ? [255, 100, 100, 200] : [255, 100, 100, 120];
       } else {
-        // Inflows: Blue to Cyan gradient
         return d.isTop ? [100, 150, 255, 200] : [100, 150, 255, 120];
       }
     },
     getTargetColor: d => {
       if (d.direction === 'outflow') {
-        // Outflows: Red to Orange gradient
         return d.isTop ? [255, 50, 50, 200] : [255, 50, 50, 120];
       } else {
-        // Inflows: Blue to Cyan gradient
         return d.isTop ? [50, 200, 255, 200] : [50, 200, 255, 120];
       }
     },
     getWidth: d => {
-      // Use absolute value for width, with minimum width
       const baseWidth = Math.max(1, Math.sqrt(d.absValue) / 20);
       if (d.isTop) return baseWidth * 1.5;
       return baseWidth;
     },
     getHeight: d => d.isTop ? 0.3 : 0.1,
     getTilt: d => d.isTop ? 30 : 0,
-  });
+  }), [annotatedData]);
 
-  // Country borders layer with enhanced highlighting
-  const countryShapesLayer = geoData &&
-    new GeoJsonLayer({
-      id: `country-shapes-${selectedCountry}`,
-      data: geoData,
-      pickable: true,
-      stroked: true,
-      filled: true,
-      getLineColor: d => {
-        if (d.properties?.ISO2 === selectedCountry) return [255, 255, 0, 255]; // Yellow border for selected
-        return [255, 255, 255, 100]; // White border for others
-      },
-      getFillColor: d => {
-        if (d.properties?.ISO2 === selectedCountry) return [255, 255, 0, 40]; // Yellow fill for selected
-        return [100, 100, 100, 20]; // Gray fill for others
-      },
-      lineWidthMinPixels: 1,
-      autoHighlight: true,
-      onClick: ({ object }) => {
-        if (object?.properties?.ISO2) {
-          setSelectedCountry(object.properties.ISO2);
-        }
-      },
-      getTooltip: ({ object }: { object: any }) =>
-        object && `${object.properties.NAME} (${object.properties.ISO3})`,
-    });
+  const countryShapesLayer = useMemo(() => geoData && new GeoJsonLayer({
+    id: `country-shapes-${selectedCountry}`,
+    data: geoData,
+    pickable: true,
+    stroked: true,
+    filled: true,
+    getLineColor: d => {
+      if (d.properties?.ISO2 === selectedCountry) return [255, 255, 0, 255];
+      return [255, 255, 255, 100];
+    },
+    getFillColor: d => {
+      if (d.properties?.ISO2 === selectedCountry) return [255, 255, 0, 40];
+      return [100, 100, 100, 20];
+    },
+    lineWidthMinPixels: 1,
+    autoHighlight: true,
+    onClick: ({ object }) => {
+      if (object?.properties?.ISO2) {
+        setSelectedCountry(object.properties.ISO2);
+      }
+    },
+    getTooltip: ({ object }: { object: any }) =>
+      object && `${object.properties.NAME} (${object.properties.ISO3})`,
+  }), [geoData, selectedCountry, setSelectedCountry]);
 
-  const layers = [countryShapesLayer, arcLayer].filter(Boolean);
+  const layers = useMemo(() => [countryShapesLayer, arcLayer].filter(Boolean), [countryShapesLayer, arcLayer]);
+
+  // WebGL context loss handler for Safari
+  useEffect(() => {
+    // Find the canvas element used by MapLibre GL
+    const mapCanvas = document.querySelector('.maplibregl-canvas');
+    if (!mapCanvas) return;
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      // Optionally, show a message or reload the page
+      // For now, reload the map container
+      window.location.reload();
+    };
+    mapCanvas.addEventListener('webglcontextlost', handleContextLost, false);
+    return () => {
+      mapCanvas.removeEventListener('webglcontextlost', handleContextLost);
+    };
+  }, []);
 
   // Map style options
   // SVG icons for each style
