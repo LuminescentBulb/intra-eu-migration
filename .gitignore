@@ -1,3 +1,7 @@
 /env
 /data/cleaned
 /data/raw/estat_migr_imm5prv.tsv
+
+.idea
+.github
+*/.DS_Store
