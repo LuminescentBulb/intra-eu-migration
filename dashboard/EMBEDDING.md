@@ -1,16 +1,16 @@
-# Embedding the EU Migration Dashboard
+# Embedding the EU Migration & Capital Flows Dashboard
 
-This dashboard can be easily embedded on other websites using iframes. The dashboard automatically adapts its layout and functionality when embedded.
+This dashboard can be embedded on other websites using iframes. It automatically adapts its layout when embedded.
 
 ## Basic Embedding
 
 ### Simple iframe
 ```html
-<iframe 
-    src="https://eu-dashboard.stellux.org/?embedded=true" 
-    width="100%" 
-    height="600px" 
-    frameborder="0" 
+<iframe
+    src="https://eu-dashboard.stellux.org/?embedded=true"
+    width="100%"
+    height="600px"
+    frameborder="0"
     allowfullscreen>
 </iframe>
 ```
@@ -18,8 +18,8 @@ This dashboard can be easily embedded on other websites using iframes. The dashb
 ### Responsive iframe
 ```html
 <div style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
-    <iframe 
-        src="https://eu-dashboard.stellux.org/?embedded=true" 
+    <iframe
+        src="https://eu-dashboard.stellux.org/?embedded=true"
         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
         allowfullscreen>
     </iframe>
@@ -28,148 +28,73 @@ This dashboard can be easily embedded on other websites using iframes. The dashb
 
 ## URL Parameters
 
-The dashboard supports various URL parameters for customization:
-
 ### Core Parameters
-- `embedded=true` - Enables embedded mode (required)
-- `compact=true` - Enables compact mode for smaller containers
+| Parameter | Values | Description |
+|-----------|--------|-------------|
+| `embedded` | `true` | Enables embedded mode (required) |
+| `compact` | `true` | Compact mode for smaller containers |
+| `mode` | `migration` \| `capital` | Initial dashboard mode (default: `migration`) |
+| `country` | ISO 2-letter code | Initial selected country (default: `RO`) |
+| `year` | `2004`–`2023` (migration) or `2013`–`2024` (capital) | Initial year |
 
-### Data Parameters
-- `country=XX` - Set initial country (e.g., `country=DE` for Germany)
-- `year=YYYY` - Set initial year (2004-2023)
+### Dashboard Modes
 
-### Examples
+**Migration mode** (`mode=migration`): Shows intra-EU population flows as arcs between countries. Year range 2004–2023.
 
-**Basic embedded dashboard:**
+**Capital Flows mode** (`mode=capital`): Shows bilateral FDI positions and income between EU/EEA countries using a choropleth. Green = selected country is net investor, red = the other country invests more. Year range 2013–2024.
+
+## Examples
+
+**Migration dashboard, Germany 2020:**
+```
+https://eu-dashboard.stellux.org/?embedded=true&mode=migration&country=DE&year=2020
+```
+
+**Capital flows dashboard, France 2022:**
+```
+https://eu-dashboard.stellux.org/?embedded=true&mode=capital&country=FR&year=2022
+```
+
+**Compact capital flows, Netherlands:**
+```
+https://eu-dashboard.stellux.org/?embedded=true&compact=true&mode=capital&country=NL
+```
+
+**Default (migration, Romania 2016):**
 ```
 https://eu-dashboard.stellux.org/?embedded=true
 ```
 
-**Compact mode:**
-```
-https://eu-dashboard.stellux.org/?embedded=true&compact=true
-```
+## Available Country Codes
 
-**Pre-configured for Germany in 2020:**
-```
-https://eu-dashboard.stellux.org/?embedded=true&country=DE&year=2020
-```
+EU member states: `AT` `BE` `BG` `HR` `CY` `CZ` `DK` `EE` `FI` `FR` `DE` `GR` `HU` `IE` `IT` `LV` `LT` `LU` `MT` `NL` `PL` `PT` `RO` `SK` `SI` `ES` `SE`
 
-**Compact mode with specific country:**
-```
-https://eu-dashboard.stellux.org/?embedded=true&compact=true&country=FR
-```
+EEA + associated: `NO` `IS` `LI` `CH` `UK`
 
-## Available Countries
+## Embedded Mode Behaviour
 
-Use these country codes in the `country` parameter:
+When `embedded=true`:
+- Sidebar starts closed (more map space)
+- Smaller fonts and compact spacing
 
-- `RO` - Romania
-- `DE` - Germany
-- `FR` - France
-- `IT` - Italy
-- `ES` - Spain
-- `PL` - Poland
-- `NL` - Netherlands
-- `BE` - Belgium
-- `AT` - Austria
-- `SE` - Sweden
-- `DK` - Denmark
-- `FI` - Finland
-- `PT` - Portugal
-- `IE` - Ireland
-- `LU` - Luxembourg
-- `MT` - Malta
-- `CY` - Cyprus
-- `EE` - Estonia
-- `LV` - Latvia
-- `LT` - Lithuania
-- `SI` - Slovenia
-- `CZ` - Czech Republic
-- `SK` - Slovakia
-- `HU` - Hungary
-- `HR` - Croatia
-- `BG` - Bulgaria
-- `GR` - Greece
+When `compact=true` (in addition to the above):
+- Further reduced font sizes and padding
+- Narrower sidebar width limits
 
-## Embedding Features
+## Security Headers
 
-### Automatic Adaptations
-When embedded, the dashboard automatically:
-- Starts with the sidebar closed for more map space
-- Uses smaller fonts and compact spacing
-- Removes unnecessary margins and padding
-- Optimizes for iframe display
-
-### Compact Mode
-When `compact=true` is used:
-- Further reduces font sizes
-- Minimizes padding and margins
-- Optimizes for smaller containers
-- Reduces sidebar width limits
-
-### Responsive Design
-The dashboard is fully responsive and will adapt to:
-- Different screen sizes
-- Various aspect ratios
-- Mobile devices
-- Different container sizes
-
-## Security Considerations
-
-The dashboard includes security headers that allow embedding:
+The dashboard allows iframe embedding via:
 - `X-Frame-Options: ALLOWALL`
 - `Content-Security-Policy: frame-ancestors 'self' *`
 
-## Performance Tips
-
-1. **Use appropriate iframe dimensions** - Don't make the iframe too small
-2. **Consider loading time** - The dashboard loads migration data on demand
-3. **Mobile optimization** - Use responsive iframe containers for mobile
-4. **Caching** - The dashboard can be cached by browsers
-
-## Troubleshooting
-
-### Common Issues
-
-**Dashboard doesn't load in iframe:**
-- Ensure the domain allows iframe embedding
-- Check that `embedded=true` parameter is included
-- Verify the URL is accessible
-
-**Dashboard appears cut off:**
-- Increase iframe height
-- Use responsive iframe container
-- Check for CSS conflicts on parent page
-
-**Performance issues:**
-- Reduce iframe size if necessary
-- Consider using compact mode
-- Ensure stable internet connection
-
-### Browser Compatibility
-
-The dashboard works in all modern browsers:
-- Chrome/Chromium
-- Firefox
-- Safari
-- Edge
-
-## Example Implementation
-
-Here's a complete example of embedding the dashboard:
+## Complete Example
 
 ```html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>EU Migration Dashboard</title>
+    <title>EU Dashboard</title>
     <style>
-        .dashboard-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
         .responsive-iframe {
             position: relative;
             width: 100%;
@@ -181,29 +106,22 @@ Here's a complete example of embedding the dashboard:
         }
         .responsive-iframe iframe {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             border: none;
         }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <h1>EU Migration Patterns</h1>
-        <div class="responsive-iframe">
-            <iframe 
-                src="https://eu-dashboard.stellux.org/?embedded=true&compact=true" 
-                title="EU Migration Dashboard"
-                allowfullscreen>
-            </iframe>
-        </div>
+    <!-- Migration flows -->
+    <div class="responsive-iframe">
+        <iframe src="https://eu-dashboard.stellux.org/?embedded=true&mode=migration&country=PL" allowfullscreen></iframe>
+    </div>
+
+    <!-- Capital flows -->
+    <div class="responsive-iframe">
+        <iframe src="https://eu-dashboard.stellux.org/?embedded=true&mode=capital&country=DE&year=2022" allowfullscreen></iframe>
     </div>
 </body>
 </html>
 ```
-
-## Support
-
-For questions about embedding the dashboard, please refer to the main project documentation or create an issue in the project repository. 

@@ -1,209 +1,118 @@
-# Intra-EU Migration Dashboard
+# EU Migration & Capital Flows Dashboard
 
-A data analytics and visualization project to explore how **free movement within the EU** has shaped **population flows, demographics, and regional economic divergence** from **2004 (Eastern enlargement of EU) to the present**.
+An interactive data visualization project exploring how **free movement within the EU** has shaped **population flows** and **capital investment patterns** from 2004 to the present.
 
-## 🚀 Live Dashboard
+## Live Dashboard
 
-The interactive dashboard is built with Next.js and Deck.gl, featuring:
+[https://eu-dashboard.stellux.org](https://eu-dashboard.stellux.org)
 
-- **Interactive Migration Map**: Real-time visualization of migration flows between EU countries
-- **Time Series Animation**: Animate through years 2004-2023 to see migration patterns evolve
-- **Country Selection**: Click on countries to focus on their specific migration flows
-- **Top Migrants Analysis**: Real-time ranking of countries with highest inflows/outflows
-- **EU Aggregates**: Comprehensive statistics across all EU/EEA countries
-- **Responsive Design**: Collapsible sidebar with resizeable controls panel
+The dashboard has two modes, switchable via the pill at the top:
 
-### Key Features
+### Migration Mode (2004–2023)
+- Arc visualization of bilateral migration flows between EU/EEA countries
+- Color-coded by direction: red = outflows, blue = inflows
+- Arc thickness scales with flow size; top 10 flows are highlighted
+- Sidebar: top migrants ranking, detailed flow data, statistics, EU aggregates
 
-- **Arc Visualization**: Migration flows displayed as curved arcs with color coding (red for outflows, blue for inflows)
-- **Top Flows Highlighting**: Top 10 migration flows are highlighted with thicker, more prominent arcs
-- **Year-by-Year Analysis**: Step through or animate through 20 years of migration data
-- **Multi-tab Interface**: 
-  - Top Migrants: Real-time rankings
-  - Migration Data: Detailed flow statistics
-  - Statistics: Aggregate analysis
-  - EU Aggregates: Cross-country comparisons
+### Capital Flows Mode (2013–2024)
+- Choropleth map of bilateral FDI positions relative to the selected country
+  - Green = selected country is net investor in that country
+  - Red = that country invests more in the selected country
+- Hover tooltip showing bilateral investment positions, annual income, and net figures in both directions
+- Sidebar: FDI overview (total outward/inward position + income), top partners, EU-wide net investor rankings
 
 ---
 
-## 📊 Data Processing
+## Data Sources & Processing
 
-The raw Eurostat `.tsv` files (e.g. `estat_migr_imm5prv.tsv`) are cleaned using a Python script that:
+### Migration
+Raw Eurostat file: `estat_migr_imm5prv.tsv`
 
-- Parses the wide-format `.tsv` into a tidy long format
-- Filters to rows where:
-  - `agedef = COMPLET` (standard age breakdown only)
-  - `unit = NR` (number of people)
-  - `freq = A` (annual data)
-- Drops columns: `freq`, `unit`, `agedef`
-- Excludes all rows where the origin (`partner`) and destination (`geo`) country are the same (A → A)
-- Removes duplicate or ambiguous country codes (e.g. `EU28_FOR`, `CC8_22_FOR`, `AU-NZ`) from the dataset entirely
-- Aggregates all **non-EU free movement countries** into a single `"OTHER"` category
-- Produces three cleaned datasets:
-  1. **Total bilateral migration** — only rows where `age = TOTAL` and `sex = T` (no breakdown)
-  2. **Bilateral migration by age group** — retains `age`, sums over all `sex`
-  3. **Net bilateral migration** — computed as `(partner → geo) - (geo → partner)` for each year and pair
+Cleaned with `scripts/clean_migration_data.py`:
+- Filters: `agedef=COMPLET`, `unit=NR`, `freq=A`, `age=TOTAL`, `sex=T`
+- Aggregates non-EU/EEA countries into `OTHER`
+- Outputs bilateral flows, by-age flows, and net flows
 
-### Countries Used in Cleaning (`EU_EEA_CH_UK`)
+### Capital Flows (FDI)
+Raw Eurostat files: `bop_fdi6_pos_linear_2_0.csv` (positions), `bop_fdi6_inc_linear_2_0.csv` (income)
 
-| Code | Country            |
-|------|--------------------|
-| AT   | Austria            |
-| BE   | Belgium            |
-| BG   | Bulgaria           |
-| HR   | Croatia            |
-| CY   | Cyprus             |
-| CZ   | Czechia            |
-| DK   | Denmark            |
-| EE   | Estonia            |
-| FI   | Finland            |
-| FR   | France             |
-| DE   | Germany            |
-| GR   | Greece             |
-| HU   | Hungary            |
-| IE   | Ireland            |
-| IT   | Italy              |
-| LV   | Latvia             |
-| LT   | Lithuania          |
-| LU   | Luxembourg         |
-| MT   | Malta              |
-| NL   | Netherlands        |
-| PL   | Poland             |
-| PT   | Portugal           |
-| RO   | Romania            |
-| SK   | Slovakia           |
-| SI   | Slovenia           |
-| ES   | Spain              |
-| SE   | Sweden             |
-| UK   | United Kingdom     |
-| CH   | Switzerland        |
-| NO   | Norway             |
-| IS   | Iceland            |
-| LI   | Liechtenstein      |
+Cleaned with `scripts/clean_fdi_data.py`:
+- Position filter: `stk_flow=ASS` (outward assets), `fdi_item=DI__D__F`, `entity=TOTAL`, `currency=MIO_EUR`
+- Income filter: `stk_flow=IO`, `fdi_item=DO__D4P__D__F`
+- Greece remapped from Eurostat code `EL` → `GR`
+- Merged into `fdi_bilateral.csv` with columns: `investor, host, year, position_mio_eur, income_mio_eur`
+- Coverage: 937 bilateral pairs, 2007–2024 (slider restricted to 2013–2024 for data density)
+
+> **Note on FDI data**: Positions use the *immediate counterpart* (IMM) methodology. Investment routed through Luxembourg or Netherlands holding companies is recorded as going to those countries, not the ultimate destination. Income flows bypass holding companies and are a more direct measure of real bilateral exposure.
 
 ---
 
-## 🔍 Key Insights & Analysis
+## Countries Covered
 
-### Labor Pool Winners and Losers
-
-Based on the comprehensive migration data analysis from 2004-2023, several clear patterns emerge:
-
-#### **Biggest Winners in Labor Pool Growth:**
-
-1. **Germany** - The undisputed champion of EU migration, consistently receiving the highest inflows of working-age migrants, particularly from Eastern European countries following the 2004 enlargement.
-
-2. **United Kingdom** - Prior to Brexit, the UK was a major destination for EU workers, especially from Poland, Romania, and other Eastern European countries seeking better economic opportunities.
-
-3. **Spain** - Experienced significant inflows during the pre-2008 economic boom, though patterns shifted dramatically during the financial crisis.
-
-4. **Italy** - Became an important destination for Eastern European workers, particularly in agriculture and service sectors.
-
-#### **Major Labor Pool Contributors:**
-
-1. **Poland** - The largest source of EU migrants, with millions of Poles moving to Germany, UK, and other Western European countries since 2004.
-
-2. **Romania** - Second-largest contributor, with significant flows to Italy, Spain, and Germany, especially following Romania's 2007 EU accession.
-
-3. **Bulgaria** - Similar patterns to Romania, with substantial outflows following 2007 EU accession.
-
-4. **Lithuania, Latvia, Estonia** - The Baltic states have experienced significant population outflows, particularly to the UK and Nordic countries.
-
-### Migration Pattern Evolution
-
-- **2004-2007**: Initial Eastern enlargement led to massive flows from new member states to established EU economies
-- **2008-2013**: Financial crisis dramatically altered migration patterns, with Spain and Ireland experiencing net outflows
-- **2014-2016**: Recovery period with renewed flows to Germany and UK
-- **2017-2020**: Brexit uncertainty and COVID-19 pandemic disrupted traditional patterns
-- **2021-2023**: Post-Brexit and post-pandemic recovery, with Germany remaining the primary destination
-
-### Economic Implications
-
-- **Brain Drain**: Eastern European countries have experienced significant loss of skilled workers
-- **Labor Market Integration**: Western European countries have benefited from flexible, mobile labor pools
-- **Regional Disparities**: Migration has exacerbated economic differences between Eastern and Western EU
-- **Demographic Shifts**: Aging populations in Eastern Europe accelerated by outmigration of working-age populations
+EU member states, EEA (NO, IS, LI), Switzerland, and United Kingdom. ISO 2-letter codes throughout; Greece is stored as `GR` (Eurostat source uses `EL`, remapped during cleaning).
 
 ---
 
-## 🛠️ Technical Implementation
+## Technical Stack
 
-### Frontend Stack
-- **Next.js 14** with App Router
-- **Deck.gl** for high-performance geospatial visualizations
-- **MapLibre GL** for base maps
-- **TypeScript** for type safety
-- **Tailwind CSS** for styling
-
-### Data Processing
-- **Python** with pandas for data cleaning and transformation
-- **D3.js** for data loading and manipulation in the browser
-- **Net migration calculations** for accurate flow representation
-
-### Key Components
-- `MigrationMap.tsx`: Interactive map with arc visualizations
-- `Controls.tsx`: Multi-tab control panel with real-time statistics
-- `countryLoader.tsx`: Data processing and migration arc generation
-- `clean_migration_data.py`: Python script for data cleaning and transformation
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 14, TypeScript, Tailwind CSS |
+| Maps | Deck.gl (GeoJsonLayer, ArcLayer), MapLibre GL, react-map-gl |
+| Data loading | D3.js (CSV parsing), in-browser caching |
+| Data processing | Python, pandas |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 eu-migration/
-├── dashboard/                 # Next.js frontend application
+├── dashboard/                 # Next.js application
 │   ├── src/app/
-│   │   ├── components/       # React components
-│   │   │   ├── Map.tsx      # Interactive migration map
-│   │   │   ├── Controls.tsx # Control panel with statistics
-│   │   │   └── countryLoader.tsx # Data processing
-│   │   └── page.tsx         # Main dashboard page
-│   └── public/data/         # Processed data files
+│   │   ├── components/
+│   │   │   ├── Map.tsx              # Migration arc map
+│   │   │   ├── CapitalMap.tsx       # FDI choropleth map
+│   │   │   ├── MapStyleSwitcher.tsx # Shared map style toggle
+│   │   │   ├── Controls.tsx         # Sidebar panel (both modes)
+│   │   │   ├── countryLoader.tsx    # Migration data loader
+│   │   │   └── capitalLoader.tsx    # FDI data loader
+│   │   └── dashboard.tsx            # Top-level layout + mode switching
+│   ├── public/data/
+│   │   ├── migration_total.csv
+│   │   ├── fdi_bilateral.csv
+│   │   └── europe.geojson
+│   └── EMBEDDING.md                 # Iframe embedding guide
 ├── data/
-│   ├── raw/                 # Original Eurostat data
-│   └── cleaned/             # Processed datasets
+│   ├── raw/                         # Original Eurostat downloads
+│   └── cleaned/                     # Processed datasets
 └── scripts/
-    └── clean_migration_data.py # Data cleaning script
+    ├── clean_migration_data.py
+    └── clean_fdi_data.py
 ```
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
-1. **Install Dependencies**:
-   ```bash
-   cd dashboard
-   npm install
-   ```
+```bash
+cd dashboard
+npm install
+npm run dev
+```
 
-2. **Run the Development Server**:
-   ```bash
-   npm run dev
-   ```
+Dashboard runs at `http://localhost:3000`.
 
-3. **Process Data** (if needed):
-   ```bash
-   cd scripts
-   python clean_migration_data.py
-   ```
-
-The dashboard will be available at `http://localhost:3000`
+To reprocess data:
+```bash
+cd scripts
+python clean_migration_data.py   # migration
+python clean_fdi_data.py         # FDI
+cp ../data/cleaned/fdi_bilateral.csv ../dashboard/public/data/
+```
 
 ---
 
-## 📈 Data Sources
+## Embedding
 
-- **Eurostat Migration Statistics**: `estat_migr_imm5prv.tsv`
-- **Geographic Data**: Europe GeoJSON for country boundaries
-- **Country Centroids**: Custom mapping for accurate arc visualization
-
----
-
-## 🎯 Future Enhancements
-
-- Age group analysis and visualization
-- Economic correlation analysis
-- Real-time data updates
-- Mobile-responsive design improvements
-- Export functionality for analysis results
+See [dashboard/EMBEDDING.md](dashboard/EMBEDDING.md) for iframe embedding options including `mode`, `country`, and `year` URL parameters.

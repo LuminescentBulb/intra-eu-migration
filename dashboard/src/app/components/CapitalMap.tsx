@@ -6,6 +6,7 @@ import { MapboxOverlay, MapboxOverlayProps } from '@deck.gl/mapbox';
 import { Map, useControl } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { FDIRecord, getBilateralDetail } from './capitalLoader';
+import MapStyleSwitcher from './MapStyleSwitcher';
 import { iso2ToCountry } from '@/utils/ISO2Country';
 
 const INITIAL_VIEW_STATE = {
@@ -143,28 +144,12 @@ export default function CapitalMap({
         return getBilateralDetail(allRecords, selectedCountry, hover.countryCode, year);
     }, [hover, allRecords, selectedCountry, year]);
 
-    const styleOptions = [
-        { value: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json', label: 'Dark Matter', color: '#3b4252' },
-        { value: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json', label: 'Positron', color: '#e2e8f0' },
-        { value: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json', label: 'Voyager', color: '#b6c6e3' },
-    ];
 
     return (
         <div ref={mapContainerRef} style={{ width: '100%', height: '100vh', position: 'relative' }}>
             {/* Map style switcher */}
             {setMapStyle && (
-                <div className="absolute top-4 left-4 z-20 flex flex-row gap-2 bg-gray-900 bg-opacity-90 rounded-full shadow-lg p-1 border border-gray-800" style={{ backdropFilter: 'blur(4px)' }}>
-                    {styleOptions.map(opt => (
-                        <button
-                            key={opt.value}
-                            onClick={() => setMapStyle(opt.value)}
-                            title={opt.label}
-                            className={`flex items-center justify-center rounded-full border-2 transition-all h-10 w-10 bg-gray-900 ${mapStyle === opt.value ? 'border-emerald-400 shadow-md' : 'border-transparent hover:border-emerald-300'}`}
-                        >
-                            <span className="w-7 h-7 rounded block" style={{ background: opt.color }} />
-                        </button>
-                    ))}
-                </div>
+                <MapStyleSwitcher mapStyle={mapStyle} setMapStyle={setMapStyle} accentColor="emerald" />
             )}
 
             {/* Legend */}
