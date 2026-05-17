@@ -17,7 +17,7 @@
     "lucide-react": "^0.532.0",
     "mapbox-gl": "^3.13.0",
     "maplibre-gl": "^5.6.1",
-    "next": "15.4.2",
+    "next": "15.4.10",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-map-gl": "^8.0.4"
