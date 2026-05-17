@@ -189,6 +189,7 @@ export default function Dashboard() {
             selectedCountry={selectedCountry}
             mapStyle={mapStyle}
             setMapStyle={setMapStyle}
+            embedded={isEmbedded}
           />
         ) : (
           <CapitalMap

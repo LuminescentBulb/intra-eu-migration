@@ -5,7 +5,6 @@ import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer, ArcLayer } from '@deck.gl/layers';
 import { MapboxOverlay, MapboxOverlayProps } from '@deck.gl/mapbox';
 import { Map, useControl } from 'react-map-gl/maplibre';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { PickingInfo } from 'deck.gl';
 import MapStyleSwitcher from './MapStyleSwitcher';
 
@@ -23,12 +22,14 @@ export default function MigrationMap({
   selectedCountry,
   mapStyle = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
   setMapStyle,
+  embedded = false,
 }: {
   data: any[];
   setSelectedCountry: (code: string) => void;
   selectedCountry: string;
   mapStyle?: string;
   setMapStyle?: (style: string) => void;
+  embedded?: boolean;
 }) {
   const [geoData, setGeoData] = useState<any | null>(null);
   const [hoverInfo, setHoverInfo] = useState<any | null>(null);
@@ -150,25 +151,27 @@ export default function MigrationMap({
       )}
 
       {/* Legend */}
-      <div className="absolute top-4 right-4 bg-gray-900 bg-opacity-80 rounded-lg p-3 text-white text-xs z-10">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-            <span>Outflows (from selected country)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-            <span>Inflows (to selected country)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-            <span>Selected Country</span>
-          </div>
-          <div className="text-xs text-gray-400 mt-2">
-            Line thickness indicates flow size
+      {!embedded && (
+        <div className="absolute top-4 right-4 bg-gray-900 bg-opacity-80 rounded-lg p-3 text-white text-xs z-10">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+              <span>Outflows (from selected country)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+              <span>Inflows (to selected country)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+              <span>Selected Country</span>
+            </div>
+            <div className="text-xs text-gray-400 mt-2">
+              Line thickness indicates flow size
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <Map
         initialViewState={INITIAL_VIEW_STATE}

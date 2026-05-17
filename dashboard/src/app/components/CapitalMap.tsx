@@ -4,7 +4,6 @@ import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { GeoJsonLayer } from '@deck.gl/layers';
 import { MapboxOverlay, MapboxOverlayProps } from '@deck.gl/mapbox';
 import { Map, useControl } from 'react-map-gl/maplibre';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { FDIRecord, getBilateralDetail } from './capitalLoader';
 import MapStyleSwitcher from './MapStyleSwitcher';
 import { iso2ToCountry } from '@/utils/ISO2Country';
