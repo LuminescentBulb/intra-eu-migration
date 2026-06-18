@@ -134,7 +134,7 @@ export default function Dashboard() {
       {/* Sidebar */}
       <div
         ref={sidebarRef}
-        className="bg-gray-900 text-gray-100 transition-all duration-300 ease-out overflow-hidden"
+        className="flex-shrink-0 bg-gray-900 text-gray-100 transition-all duration-300 ease-out overflow-hidden"
         style={{
           width: panelOpen ? `${sidebarWidth}px` : '0px',
           minWidth: panelOpen ? (isCompact ? '150px' : '200px') : '0px',
@@ -162,7 +162,7 @@ export default function Dashboard() {
       {/* Resize handle */}
       {panelOpen && (
         <div
-          className="w-1 bg-gray-700 hover:bg-gray-600 cursor-col-resize transition-colors duration-200 relative z-20"
+          className="w-1 flex-shrink-0 bg-gray-700 hover:bg-gray-600 cursor-col-resize transition-colors duration-200 relative z-20"
           onMouseDown={handleMouseDown}
         >
           <div className="absolute inset-0 flex items-center justify-center">
